@@ -48,5 +48,21 @@ public class ClienteDTOMapper {
 
 	}	
 	
+	public static Cliente mergeDTOToEntity(ClienteDTO currentCliente, ClienteDTO cliente) {
+
+		var clienteEntity = new Cliente();
+		
+		clienteEntity.setId(currentCliente.getId());
+		clienteEntity.setNombre(cliente.getNombre()!=null ? cliente.getNombre() : currentCliente.getNombre());
+		clienteEntity.setApellido(cliente.getApellido()!=null ? cliente.getApellido() : currentCliente.getApellido());
+		clienteEntity.setEmail(cliente.getEmail()!=null ? cliente.getEmail() : currentCliente.getEmail());
+		clienteEntity.setBornAt(cliente.getBornAt()!=null ? cliente.getBornAt() : currentCliente.getBornAt());
+		clienteEntity.setCreateAt(cliente.getCreateAt()!=null ? cliente.getCreateAt() : currentCliente.getCreateAt());
+		clienteEntity.setFoto(cliente.getFoto()!=null ? cliente.getFoto() : currentCliente.getFoto());
+		
+		return clienteEntity;
+
+	}
+	
 	
 }

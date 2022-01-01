@@ -118,6 +118,17 @@ public class ClienteServiceImpl implements IClienteService {
 
 	@Override
 	@Transactional
+	public void actualizarClienteMerge(Long id, ClienteDTO cliente) {
+		
+		var currentCliente = clienteDao.findById(id).orElse(null);
+		clienteDao.save(ClienteDTOMapper.mergeDTOToEntity(				
+				ClienteDTOMapper.transformEntityToDTO(currentCliente),
+						cliente));
+		
+	}
+	
+	@Override
+	@Transactional
 	public void actualizarCliente(ClienteDTO cliente) {
 		
 		clienteDao.save(ClienteDTOMapper.transformDTOToEntity(cliente));

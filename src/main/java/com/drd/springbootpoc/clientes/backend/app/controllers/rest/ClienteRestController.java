@@ -54,7 +54,7 @@ public class ClienteRestController extends AppController{
 	@PutMapping("/clientes/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
 	public ClienteDTO update(@PathVariable Long id, @RequestBody ClienteDTO cliente) {
-		clienteService.actualizarCliente(cliente);
+		clienteService.actualizarClienteMerge(id, cliente);
 		return clienteService.obtenerCliente(id);
 	}	
 	

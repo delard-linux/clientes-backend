@@ -26,6 +26,8 @@ public interface IClienteService {
 	
 	public Long crearClienteConFoto(ClienteDTO cliente, MultipartFile file) throws IOException;
 
+	public void actualizarClienteMerge(Long id, ClienteDTO cliente);
+	
 	public void actualizarCliente(ClienteDTO cliente);
 	
 	public void actualizarClienteConFoto(ClienteDTO cliente, MultipartFile file) throws IOException;
