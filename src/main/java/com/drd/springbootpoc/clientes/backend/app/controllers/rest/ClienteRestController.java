@@ -1,12 +1,17 @@
 package com.drd.springbootpoc.clientes.backend.app.controllers.rest;
 
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,10 +33,10 @@ public class ClienteRestController extends AppController{
 	
 	private static final String MSG_RESPONSE_KEY_MENSAJE = "mensaje";
 	private static final String MSG_RESPONSE_KEY_CLIENTE = "cliente";
+	private static final String MSG_RESPONSE_KEY_ERRORES = "errors";
 	
 	@Autowired
 	private IClienteService clienteService;
-	
 
 	@GetMapping(value={"/clientes"})
 	public List<ClienteDTO> list() {
@@ -65,7 +70,12 @@ public class ClienteRestController extends AppController{
 	}	
 	
 	@PostMapping(value={"/clientes"})
-	public ResponseEntity<Map<String, Object>> create(@RequestBody ClienteDTO cliente) {
+	public ResponseEntity<Map<String, Object>> create(@Valid @RequestBody ClienteDTO cliente,
+			BindingResult result) {
+		
+		if(result.hasErrors()) {
+			return gestionarResponseNoValida("Cliente no válido", result);
+		}
 		
 		Long id = null;
 		ClienteDTO clienteGuardado = null;
@@ -85,8 +95,14 @@ public class ClienteRestController extends AppController{
 	}	
 
 	@PutMapping("/clientes/{id}")
-	public ResponseEntity<Map<String, Object>> update(@PathVariable Long id, @RequestBody ClienteDTO cliente) {
-
+	public ResponseEntity<Map<String, Object>> update(@PathVariable Long id, 
+			@Valid @RequestBody ClienteDTO cliente,
+			BindingResult result) {
+			
+		if(result.hasErrors()) {
+			return gestionarResponseNoValida("Cliente no válido", result);
+		}
+		
 		ClienteDTO clienteGuardado = null;
 		
 		try {
@@ -129,7 +145,7 @@ public class ClienteRestController extends AppController{
 	}
 
 
-	protected ResponseEntity<Map<String, Object>> gestionarResponse(String msg, ClienteDTO cliente, HttpStatus status) {
+	private ResponseEntity<Map<String, Object>> gestionarResponse(String msg, ClienteDTO cliente, HttpStatus status) {
 		
 		Map<String, Object> mapResult = new HashMap<>();
 		
@@ -140,5 +156,23 @@ public class ClienteRestController extends AppController{
 		return new ResponseEntity<>(mapResult, status);
 
 	}
+	
+	private ResponseEntity<Map<String, Object>> gestionarResponseNoValida(String msg, BindingResult result) {
+		
+		Map<String, Object> mapResult = new HashMap<>();
+		
+		mapResult.put(MSG_RESPONSE_KEY_MENSAJE, msg);
+		
+		List<String> errors = result.getFieldErrors()
+								.stream()
+								.map(err -> err.getField() + " - " + err.getDefaultMessage())
+								.collect(Collectors.toList());
+		
+		mapResult.put(MSG_RESPONSE_KEY_ERRORES, errors);
+		
+		return new ResponseEntity<>(mapResult, HttpStatus.BAD_REQUEST);
+
+	}
+	
 	
 }
