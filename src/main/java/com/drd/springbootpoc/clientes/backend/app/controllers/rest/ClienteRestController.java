@@ -32,6 +32,12 @@ public class ClienteRestController extends AppController{
 	
 	private final Logger log = LoggerFactory.getLogger(getClass());
 	
+	private static final String MSG_RESPONSE_KEY_MENSAJE = "mensaje";
+	private static final String MSG_RESPONSE_KEY_ERROR = "error";
+	private static final String MSG_RESPONSE_KEY_CLIENTE = "cliente";
+
+	private static final String MSG_RESPONSE_VALUE_ERROR_SERVICIO = "Error al acceder al servicio";
+	
 	@Autowired
 	private IClienteService clienteService;
 	
@@ -43,7 +49,7 @@ public class ClienteRestController extends AppController{
 	}	
 
 	@GetMapping(value={"/clientes/{id}"})
-	public ResponseEntity<?> show(@PathVariable Long id) {
+	public ResponseEntity<Map<String, Object>> show(@PathVariable Long id) {
 		
 		ClienteDTO cliente = null; 
 		Map<String, Object> mapResult = new HashMap<>();
@@ -51,32 +57,53 @@ public class ClienteRestController extends AppController{
 		try {
 			cliente = clienteService.obtenerCliente(id);
 		} catch (Exception e) {
-			log.error("Error al acceder a la BD");
+			log.error(MSG_RESPONSE_VALUE_ERROR_SERVICIO);
 			log.error(e.getMessage(),e);
-			mapResult.put("mensaje", "Error al acceder a la BD");
-			mapResult.put("error", e.getMessage() );
+			mapResult.put(MSG_RESPONSE_KEY_MENSAJE, MSG_RESPONSE_VALUE_ERROR_SERVICIO);
+			mapResult.put(MSG_RESPONSE_KEY_ERROR, e.getMessage() );
 			return new ResponseEntity<>(mapResult,
 					HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
 		if (cliente==null) {
-			mapResult.put("mensaje", "El cliente ID: "
+			mapResult.put(MSG_RESPONSE_KEY_MENSAJE, "El cliente ID: "
 					.concat(id.toString())
 					.concat(" no existe en la BD"));
 			return new ResponseEntity<>(mapResult,
 					HttpStatus.NOT_FOUND);
 		}
 		
-		return new ResponseEntity<>(cliente,
+		mapResult.put(MSG_RESPONSE_KEY_MENSAJE, "Cliente obtenido con éxito");
+		mapResult.put(MSG_RESPONSE_KEY_CLIENTE, cliente );
+		return new ResponseEntity<>(mapResult,
 				HttpStatus.OK);
 		
 	}	
 	
 	@PostMapping(value={"/clientes"})
-	@ResponseStatus(HttpStatus.CREATED)
-	public ClienteDTO create(@RequestBody ClienteDTO cliente) {
-		Long id = clienteService.crearCliente(cliente);
-		return clienteService.obtenerCliente(id);
+	public ResponseEntity<Map<String, Object>> create(@RequestBody ClienteDTO cliente) {
+		
+		Long id = null;
+		ClienteDTO clienteGuardado = null;
+		Map<String, Object> mapResult = new HashMap<>();
+		
+		try {
+			id = clienteService.crearCliente(cliente);
+			clienteGuardado = clienteService.obtenerCliente(id);
+		} catch (Exception e) {
+			log.error(MSG_RESPONSE_VALUE_ERROR_SERVICIO);
+			log.error(e.getMessage(),e);
+			mapResult.put(MSG_RESPONSE_KEY_MENSAJE, MSG_RESPONSE_VALUE_ERROR_SERVICIO);
+			mapResult.put(MSG_RESPONSE_KEY_ERROR, e.getMessage() );
+			return new ResponseEntity<>(mapResult,
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		mapResult.put(MSG_RESPONSE_KEY_MENSAJE, "Cliente creado con éxito");
+		mapResult.put(MSG_RESPONSE_KEY_CLIENTE, clienteGuardado );
+		return new ResponseEntity<>(mapResult,
+				HttpStatus.CREATED);
+	
 	}	
 
 	@PutMapping("/clientes/{id}")
