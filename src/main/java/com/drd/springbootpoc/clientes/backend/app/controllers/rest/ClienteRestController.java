@@ -1,12 +1,15 @@
 package com.drd.springbootpoc.clientes.backend.app.controllers.rest;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,8 +43,33 @@ public class ClienteRestController extends AppController{
 	}	
 
 	@GetMapping(value={"/clientes/{id}"})
-	public ClienteDTO show(@PathVariable Long id) {
-		return clienteService.obtenerCliente(id);
+	public ResponseEntity<?> show(@PathVariable Long id) {
+		
+		ClienteDTO cliente = null; 
+		Map<String, Object> mapResult = new HashMap<>();
+		
+		try {
+			cliente = clienteService.obtenerCliente(id);
+		} catch (Exception e) {
+			log.error("Error al acceder a la BD");
+			log.error(e.getMessage(),e);
+			mapResult.put("mensaje", "Error al acceder a la BD");
+			mapResult.put("error", e.getMessage() );
+			return new ResponseEntity<>(mapResult,
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		if (cliente==null) {
+			mapResult.put("mensaje", "El cliente ID: "
+					.concat(id.toString())
+					.concat(" no existe en la BD"));
+			return new ResponseEntity<>(mapResult,
+					HttpStatus.NOT_FOUND);
+		}
+		
+		return new ResponseEntity<>(cliente,
+				HttpStatus.OK);
+		
 	}	
 	
 	@PostMapping(value={"/clientes"})
