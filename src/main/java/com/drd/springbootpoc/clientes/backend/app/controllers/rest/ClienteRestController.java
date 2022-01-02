@@ -33,10 +33,7 @@ public class ClienteRestController extends AppController{
 	private final Logger log = LoggerFactory.getLogger(getClass());
 	
 	private static final String MSG_RESPONSE_KEY_MENSAJE = "mensaje";
-	private static final String MSG_RESPONSE_KEY_ERROR = "error";
 	private static final String MSG_RESPONSE_KEY_CLIENTE = "cliente";
-
-	private static final String MSG_RESPONSE_VALUE_ERROR_SERVICIO = "Error al acceder al servicio";
 	
 	@Autowired
 	private IClienteService clienteService;
@@ -52,30 +49,23 @@ public class ClienteRestController extends AppController{
 	public ResponseEntity<Map<String, Object>> show(@PathVariable Long id) {
 		
 		ClienteDTO cliente = null; 
-		Map<String, Object> mapResult = new HashMap<>();
 		
 		try {
 			cliente = clienteService.obtenerCliente(id);
 		} catch (Exception e) {
-			log.error(MSG_RESPONSE_VALUE_ERROR_SERVICIO);
-			log.error(e.getMessage(),e);
-			mapResult.put(MSG_RESPONSE_KEY_MENSAJE, MSG_RESPONSE_VALUE_ERROR_SERVICIO);
-			mapResult.put(MSG_RESPONSE_KEY_ERROR, e.getMessage() );
-			return new ResponseEntity<>(mapResult,
-					HttpStatus.INTERNAL_SERVER_ERROR);
+			return gestionarExceptionResponse(e);
 		}
 		
 		if (cliente==null) {
-			mapResult.put(MSG_RESPONSE_KEY_MENSAJE, "El cliente ID: "
-					.concat(id.toString())
-					.concat(" no existe en la BD"));
-			return new ResponseEntity<>(mapResult,
+			return gestionarResponse(
+					"El cliente ID: ".concat(id.toString()).concat(" no existe en la BD"),
+					cliente,
 					HttpStatus.NOT_FOUND);
 		}
 		
-		mapResult.put(MSG_RESPONSE_KEY_MENSAJE, "Cliente obtenido con éxito");
-		mapResult.put(MSG_RESPONSE_KEY_CLIENTE, cliente );
-		return new ResponseEntity<>(mapResult,
+		return gestionarResponse(
+				"Cliente obtenido con éxito",
+				cliente,
 				HttpStatus.OK);
 		
 	}	
@@ -85,32 +75,38 @@ public class ClienteRestController extends AppController{
 		
 		Long id = null;
 		ClienteDTO clienteGuardado = null;
-		Map<String, Object> mapResult = new HashMap<>();
 		
 		try {
 			id = clienteService.crearCliente(cliente);
 			clienteGuardado = clienteService.obtenerCliente(id);
 		} catch (Exception e) {
-			log.error(MSG_RESPONSE_VALUE_ERROR_SERVICIO);
-			log.error(e.getMessage(),e);
-			mapResult.put(MSG_RESPONSE_KEY_MENSAJE, MSG_RESPONSE_VALUE_ERROR_SERVICIO);
-			mapResult.put(MSG_RESPONSE_KEY_ERROR, e.getMessage() );
-			return new ResponseEntity<>(mapResult,
-					HttpStatus.INTERNAL_SERVER_ERROR);
+			return gestionarExceptionResponse(e);
 		}
-		
-		mapResult.put(MSG_RESPONSE_KEY_MENSAJE, "Cliente creado con éxito");
-		mapResult.put(MSG_RESPONSE_KEY_CLIENTE, clienteGuardado );
-		return new ResponseEntity<>(mapResult,
+
+		return gestionarResponse(
+				"Cliente creado con éxito",
+				clienteGuardado,
 				HttpStatus.CREATED);
-	
+
 	}	
 
 	@PutMapping("/clientes/{id}")
-	@ResponseStatus(HttpStatus.CREATED)
-	public ClienteDTO update(@PathVariable Long id, @RequestBody ClienteDTO cliente) {
-		clienteService.actualizarClienteMerge(id, cliente);
-		return clienteService.obtenerCliente(id);
+	public ResponseEntity<Map<String, Object>> update(@PathVariable Long id, @RequestBody ClienteDTO cliente) {
+
+		ClienteDTO clienteGuardado = null;
+		
+		try {
+			clienteService.actualizarClienteMerge(id, cliente);
+			clienteGuardado = clienteService.obtenerCliente(id);
+		} catch (Exception e) {
+			return gestionarExceptionResponse(e);
+		}
+
+		return gestionarResponse(
+				"Cliente actualizado con éxito",
+				clienteGuardado,
+				HttpStatus.CREATED);
+		
 	}	
 	
 	@DeleteMapping("/clientes/{id}")
@@ -131,5 +127,15 @@ public class ClienteRestController extends AppController{
 		
 	}	
 
+	protected ResponseEntity<Map<String, Object>> gestionarResponse(String msg, ClienteDTO cliente, HttpStatus status) {
+		
+		Map<String, Object> mapResult = new HashMap<>();
+		
+		mapResult.put(MSG_RESPONSE_KEY_MENSAJE, msg);
+		mapResult.put(MSG_RESPONSE_KEY_CLIENTE, cliente);
+		
+		return new ResponseEntity<>(mapResult, status);
+
+	}
 	
 }
