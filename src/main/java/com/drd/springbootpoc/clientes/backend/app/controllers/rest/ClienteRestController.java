@@ -1,12 +1,9 @@
 package com.drd.springbootpoc.clientes.backend.app.controllers.rest;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +15,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.drd.springbootpoc.clientes.backend.app.common.controller.AppController;
@@ -29,8 +25,6 @@ import com.drd.springbootpoc.clientes.backend.app.model.service.IClienteService;
 @RestController
 @RequestMapping("/api")
 public class ClienteRestController extends AppController{
-	
-	private final Logger log = LoggerFactory.getLogger(getClass());
 	
 	private static final String MSG_RESPONSE_KEY_MENSAJE = "mensaje";
 	private static final String MSG_RESPONSE_KEY_CLIENTE = "cliente";
@@ -110,29 +104,38 @@ public class ClienteRestController extends AppController{
 	}	
 	
 	@DeleteMapping("/clientes/{id}")
-	@ResponseStatus(HttpStatus.NO_CONTENT) 
-	public void delete(@PathVariable Long id) {
-		ClienteDTO cliente = clienteService.obtenerCliente(id);
-		
-		if (cliente!= null) {
-			try {
+	public ResponseEntity<Map<String, Object>> delete(@PathVariable Long id) {
+
+		ClienteDTO cliente = null;
+
+		try {
+			cliente = clienteService.obtenerCliente(id);
+			if (cliente != null)
 				clienteService.borrarCliente(id);
-			} catch (IOException e) {
-				log.error("No se puede eliminar el cliente: {}", id);
-				log.error(e.getMessage(),e);
-			}
-		} else {
-			log.error("Cliente inexistente: {}", id);
+		} catch (Exception e) {
+			return gestionarExceptionResponse(e);
 		}
-		
-	}	
+
+		if (cliente != null)
+			return gestionarResponse(
+					"Cliente eliminado con éxito",
+					cliente,
+					HttpStatus.OK);
+		else
+			return gestionarResponse(
+					"Cliente inexistente: ".concat(id.toString()),
+					cliente,
+					HttpStatus.NOT_FOUND);
+	}
+
 
 	protected ResponseEntity<Map<String, Object>> gestionarResponse(String msg, ClienteDTO cliente, HttpStatus status) {
 		
 		Map<String, Object> mapResult = new HashMap<>();
 		
 		mapResult.put(MSG_RESPONSE_KEY_MENSAJE, msg);
-		mapResult.put(MSG_RESPONSE_KEY_CLIENTE, cliente);
+		if(cliente != null)
+			mapResult.put(MSG_RESPONSE_KEY_CLIENTE, cliente);
 		
 		return new ResponseEntity<>(mapResult, status);
 
